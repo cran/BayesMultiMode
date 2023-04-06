@@ -2,83 +2,94 @@
 % Please edit documentation in R/bayes_mode.R
 \name{bayes_mode}
 \alias{bayes_mode}
-\title{Mode inference using post-processed SFM MCMC draws.}
+\title{Bayesian mode inference}
 \usage{
-bayes_mode(theta_draws, y, mixt = "shifted_poisson")
+bayes_mode(
+  BayesMix,
+  rd = 1,
+  tol_x = sd(BayesMix$data)/10,
+  show_plot = FALSE,
+  nb_iter = NULL
+)
 }
 \arguments{
-\item{theta_draws}{a (M x 3xJb) matrix. Output of `sfm_mcmc_spmix()` giving MCMC parameter draws after burn-in and discarding empty components.}
+\item{BayesMix}{An object of class `BayesMixture`}
 
-\item{y}{(a vector of integers) Observations used to fit the model.}
+\item{rd}{Rounding parameter}
 
-\item{mixt}{(a string) giving the mixture distribution. Default is "shifted_poisson".}
+\item{tol_x}{Tolerance parameter for distance in-between modes; default is sd(data)/10 where data is an element of BayesMix.
+If two modes are closer than tol_x, only the first estimated mode is kept.
+Not needed for mixtures of discrete distributions.}
+
+\item{show_plot}{Show density with estimated mode as vertical bars ?}
+
+\item{nb_iter}{Number of draws on which the mode-finding algorithm is run; default is NULL which means the algorithm is run on all draws.}
 }
 \value{
-A list containing:
+A list of class `BayesMode` containing
 \itemize{
-  \item Prob_unimod : Posterior probability of unimodality. (1-Prob_unimod) is equal to the posterior probability of multimodality.
-  \item table_nb_modes : Possible number of modes and posterior probability for each of those.
-  \item table_locations : Possible locations of modes and posterior probability for each of those.
-  \item A list of graphs showing : 
-  \itemize{
-       \item 1: The posterior probability of multimodality;
-       \item 2: Possible number of modes and posterior probability for each of those;
-       \item 3: Possible locations of modes and posterior probability for each of those;
-}
+ \item{data}{ - from BayesMix argument}
+ \item{dist}{ - from BayesMix argument}
+ \item{dist_type}{ - from BayesMix argument}
+ \item{pars_names}{ - from BayesMix argument}
+ \item{modes}{ - Matrix with a row for each draw and columns showing modes}
+ \item{p1}{ - Posterior probability of unimodality}
+ \item{tb_nb_modes}{ - Matrix showing posterior probabilities for the number of modes}
+ \item{table_location}{ - Matrix showing the posterior probabilities for location points being modes}
 }
 }
 \description{
-Computes the number of modes, their locations and posterior probabilities.
+Estimates modes for each mcmc draws which are then used to compute posterior probabilities for the number of modes and their locations.
+The fixed-point algorithm of Carreira-Perpinan (2000) is used for Gaussian mixtures
+while the Modal EM algorithm of Li et al. (2007) is used for other continuous mixtures.
 }
 \examples{
-# Example with simulated data ================================================
-#set seed for random number generation
-set.seed(1) 
+# Example with galaxy data ================================================
+set.seed(123) 
 
-# Set the parameters for drawing from a two-component shifted Poisson mixture
-p1 = 0.3
-p2 = 1-p1
-kap1 = 3
-kap2 = 0
-lam1 = 1
-lam2 = 0.5
-length_data = 70
+# retrieve galaxy data
+y = galaxy
 
-# Generate data
-y <- c(rpois(length_data*p1, lam1)+kap1, rpois(length_data*p2, lam2)+kap2)
+# estimation
+bayesmix = bayes_estimation(data = y,
+                           K = 5, #not many to run the example rapidly
+                           dist = "normal",
+                           nb_iter = 500, #not many to run the example rapidly
+                           burnin = 100)
 
-# Set parameters for the SFM MCMC estimation
-M = 1000 # Number of MCMC iterations 
-Jmax = 4 # Maximum number of mixture components
+# mode estimation
+bayesmode = bayes_mode(bayesmix)
 
-# Estimation with SFM MCMC
-sfm_mcmc = sfm_mcmc_spmix(y=y,Jmax=Jmax, M=M)
+# plot 
+# plot(bayesmode, max_size = 200)
 
-# Proportion of draws burned in
-S = 0.5
+# summary 
+# summary(bayesmode)
 
-# Post processing
-post_sfm_mcmc = post_sfm_mcmc(sfm_mcmc, S=S)
+# Example with DNA data ================================================
+set.seed(123) 
 
-# Mode inference
-bayes_mode(post_sfm_mcmc$theta_draws_slim,y)
-
-# Example with DNA data =====================================================
-\donttest{
+# retrieve galaxy data
 y = d4z4
-M = 5000 # Number of MCMC iterations 
-Jmax = 10 # Maximum number of mixture components
 
-# Estimation with SFM MCMC
+# estimation
+bayesmix = bayes_estimation(data = y,
+                           K = 5, #not many to run the example rapidly
+                           dist = "shifted_poisson",
+                           nb_iter = 500, #not many to run the example rapidly
+                           burnin = 100)
 
-sfm_mcmc = sfm_mcmc_spmix(y=y,Jmax=Jmax, M=M)
-# Proportion of draws burned in
-S = 0.5
+# mode estimation
+bayesmode = bayes_mode(bayesmix)
 
-# Mode inference
-bayes_mode(post_sfm_mcmc$theta_draws_slim,y)
-}
+# plot 
+# plot(bayesmode, max_size = 200)
+
+# summary 
+# summary(bayesmode)
+
 }
 \references{
-\insertRef{basturk_bayes_2021}{BayesMultiMode}
+\insertRef{carreira-perpinan_mode-finding_2000}{BayesMultiMode}\cr\cr
+\insertRef{li_nonparametric_2007}{BayesMultiMode}
 }

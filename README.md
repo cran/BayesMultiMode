@@ -4,138 +4,237 @@ BayesMultiMode
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/paullabonne/BayesMultiMode/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paullabonne/BayesMultiMode/actions/workflows/R-CMD-check.yaml)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/BayesMultiMode)](https://cran.r-project.org/package=BayesMultiMode)
 <!-- badges: end -->
 
-An R package for detecting multimodality in discrete data using Bayesian
-techniques. The approach works in two stages. First, a mixture
-distribution is fitted on the data using a Sparse Finite Mixture (SFM)
-MCMC algorithm. The number of mixture components does not have to be
-specified; it is estimated simultaneously with the mixture weights and
-components through the SFM approach. Second, the resulting MCMC output
-is used to calculate the number of modes and their locations. Posterior
-probabilities are retrieved for both of these quantities providing a
-powerful tool for mode inference. Currently the package supports a
-flexible mixture of shifted Poisson distributions. The shifted Poisson
-is a two-parameter generalisation of the Poisson distribution where the
-mean can diverge from the variance. More distributions (discrete and
-continuous) are in the pipeline.
+`BayesMultiMode` is an R package for detecting and exploring
+multimodality using Bayesian techniques. The approach works in two
+stages. First, a mixture distribution is fitted on the data using a
+sparse finite mixture Markov chain Monte Carlo (SFM MCMC) algorithm. The
+number of mixture components does not have to be known; the size of the
+mixture is estimated endogenously through the SFM approach. Second, the
+modes of the estimated mixture at each MCMC are retrieved using
+algorithms specifically tailored for mode detection. These estimates are
+then used to construct posterior probabilities for the number of modes,
+their locations and uncertainties, providing a powerful tool for mode
+inference.
 
-### Installing BayesMultiMode
+### Installing BayesMultiMode from CRAN
 
 ``` r
-# Installing from github :
+install.packages("BayesMultiMode")
+```
+
+### Or installing the development version from GitHub
+
+``` r
 # install.packages("devtools") # if devtools is not installed 
 devtools::install_github("paullabonne/BayesMultiMode")
 ```
 
-### Loading the package
+### Loading BayesMultiMode
 
 ``` r
 library(BayesMultiMode)
 ```
 
-### Generating data
+### Using BayesMultiMode for both MCMC estimation and mode inference
+
+`BayesMultiMode` provides a very flexible and efficient MCMC estimation
+approach : it handles mixtures with unknown number of components and
+supports a comprehensive range of mixture distributions, both continuous
+and discrete.
+
+#### Estimation
 
 ``` r
-set.seed(1)
-p1 = 0.3
-p2 = 1-p1
-kap1 = 3
-kap2 = 0
-lam1 = 1
-lam2 = 0.5
-length_data = 70
-simulated_data <- c(rpois(length_data*p1, lam1)+kap1, rpois(length_data*p2, lam2)+kap2)
+set.seed(123)
+
+# retrieve galaxy data
+y = galaxy
+
+# estimation
+bayesmix = bayes_estimation(data = y,
+                            K = 10,
+                            dist = "normal",
+                            nb_iter = 2000,
+                            burnin = 1000)
 ```
 
-### Choosing either simulated or DNA data
+    ## 10  % draws finished
+    ## 20  % draws finished
+    ## 30  % draws finished
+    ## 40  % draws finished
+    ## 50  % draws finished
+    ## 60  % draws finished
+    ## 70  % draws finished
+    ## 80  % draws finished
+    ## 90  % draws finished
+    ## 100  % draws finished
 
 ``` r
-# Select DNA data :
-data("d4z4")
-y = d4z4
-
-# Or select simulated data :
-# y = simulated_data
+# plot estimated mixture
+plot(bayesmix, max_size = 200)
 ```
 
-### Setting parameters for SFM MCMC estimation
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="70%" style="display: block; margin: auto;" />
+
+#### Mode inference
 
 ``` r
-# Number of MCMC iterations 
-M = 5000 
+# mode estimation
+bayesmode = bayes_mode(bayesmix)
 
-# Proportion of draws to discard as burnin
-S = 0.5 
-
-# Maximum number of mixture components 
-Jmax = 6
+# plot 
+plot(bayesmode, max_size = 200)
 ```
 
-### Estimation with SFM MCMC
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" />
 
 ``` r
-#Bayesian estimation
-sfm_mcmc = sfm_mcmc_spmix(y=y,Jmax=Jmax, M=M)
+# Summary 
+summary(bayesmode)
 ```
 
-    ## 10  % draws finished. Accept. prob of e0 = 9 percent
-    ## 20  % draws finished. Accept. prob of e0 = 8 percent
-    ## 30  % draws finished. Accept. prob of e0 = 8 percent
-    ## 40  % draws finished. Accept. prob of e0 = 9 percent
-    ## 50  % draws finished. Accept. prob of e0 = 9 percent
-    ## 60  % draws finished. Accept. prob of e0 = 9 percent
-    ## 70  % draws finished. Accept. prob of e0 = 9 percent
-    ## 80  % draws finished. Accept. prob of e0 = 9 percent
-    ## 90  % draws finished. Accept. prob of e0 = 9 percent
-    ## 100  % draws finished. Accept. prob of e0 = 9 percent
+    ## The posterior probability of the data being multimodal is 0.993 .
+    ## 
+    ## The number of estimated modes and their posterior probabilities is:
+
+    ##      Number of modes Posterior probabilty
+    ## [1,]               1                0.007
+    ## [2,]               2                0.133
+    ## [3,]               3                0.840
+    ## [4,]               4                0.020
+
+### Using BayesMultiMode for mode inference with external MCMC output
+
+`BayesMultiMode` also works on MCMC output generated using external
+software. The function `new_BayesMixture()` creates an object of class
+`BayesMixture` which can then be used as input in the mode inference
+function `bayes_mode()`. Here is an example where the `BNPmix` package
+is used for MCMC estimation.
 
 ``` r
-#Plots of the estimation output
-graphs = plots_mcmc(sfm_mcmc,S)
-graphs[[3]]
+library(BNPmix)
+library(dplyr)
 ```
 
-<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" />
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
 
 ``` r
-graphs[[4]]
+y = cyclone %>%
+  filter(BASIN == "SI",
+         SEASON > "1981") %>%
+  select(max_wind) %>%
+  unlist()
+
+## estimation
+PY_result = PYdensity(y,
+                      mcmc = list(niter = 2000, nburn = 1000),
+                      output = list(out_param = TRUE))
 ```
 
-    ## Warning: Removed 41 rows containing missing values (position_stack).
-
-<img src="README_files/figure-gfm/unnamed-chunk-6-2.png" width="70%" style="display: block; margin: auto;" />
-
-### Post-processing : burn-in and discarding empty components
+    ## Completed:   200/2000 - in 0.044338 sec
+    ## Completed:   400/2000 - in 0.091791 sec
+    ## Completed:   600/2000 - in 0.148233 sec
+    ## Completed:   800/2000 - in 0.200009 sec
+    ## Completed:   1000/2000 - in 0.248294 sec
+    ## Completed:   1200/2000 - in 0.297524 sec
+    ## Completed:   1400/2000 - in 0.349355 sec
+    ## Completed:   1600/2000 - in 0.402126 sec
+    ## Completed:   1800/2000 - in 0.457695 sec
+    ## Completed:   2000/2000 - in 0.512106 sec
+    ## 
+    ## Estimation done in 0.512113 seconds
 
 ``` r
-post_sfmmcmc = post_sfm_mcmc(sfm_mcmc,S)
+plot(PY_result)
 ```
 
-### Mode inference
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="70%" style="display: block; margin: auto;" />
+
+#### Transforming the output into a mcmc matrix with one column per variable
 
 ``` r
-sfm_mcmc_modes = bayes_mode(post_sfmmcmc$theta_draws_slim,y)
-sfm_mcmc_modes$graphs
+library(dplyr)
+
+mcmc_py = list()
+
+for (i in 1:length(PY_result$p)) {
+  k = length(PY_result$p[[i]][, 1])
+  
+  draw = c(PY_result$p[[i]][, 1],
+           PY_result$mean[[i]][, 1],
+           sqrt(PY_result$sigma2[[i]][, 1]),
+           i)
+  
+  names(draw)[1:k] = paste0("eta", 1:k)
+  names(draw)[(k+1):(2*k)] = paste0("mu", 1:k)
+  names(draw)[(2*k+1):(3*k)] = paste0("sigma", 1:k)
+  names(draw)[3*k + 1] = "draw"
+  
+  mcmc_py[[i]] = draw
+}
+
+mcmc_py = bind_rows(mcmc_py)
 ```
 
-<img src="README_files/figure-gfm/unnamed-chunk-8-1.png" width="70%" style="display: block; margin: auto;" />
+#### Creating an object of class `BayesMixture`
+
+``` r
+pars_names = c(eta = "eta",
+               mu = "mu",
+               sigma = "sigma")
+
+py_BayesMix = new_BayesMixture(mcmc = mcmc_py,
+                               data = y,
+                               K = (ncol(mcmc_py)-1)/3,
+                               burnin = 0, # the burnin has already been discarded
+                               dist = "normal",
+                               pars_names = pars_names,
+                               dist_type = "continuous")
+```
+
+#### Mode inference
+
+``` r
+# mode estimation
+bayesmode = bayes_mode(py_BayesMix)
+
+# plot ¨
+plot(bayesmode, max_size = 200)
+```
+
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="70%" style="display: block; margin: auto;" />
+
+``` r
+# Summary 
+summary(bayesmode)
+```
+
+    ## The posterior probability of the data being multimodal is 1 .
+    ## 
+    ## The number of estimated modes and their posterior probabilities is:
+
+    ##      Number of modes Posterior probabilty
+    ## [1,]               2                0.897
+    ## [2,]               3                0.103
 
 ### References
 
-(Basturk, Hoogerheide, and Dijk 2021) (Malsiner-Walli,
-Fruhwirth-Schnatter, and Grun 2016) (Schaap et al. 2013)
+(Malsiner-Walli, Fruhwirth-Schnatter, and Grun 2016) (Schaap et al.
+2013)
 
 <div id="refs" class="references csl-bib-body hanging-indent">
-
-<div id="ref-basturk_bayes_2021" class="csl-entry">
-
-Basturk, Nalan, Lennart F. Hoogerheide, and Herman van Dijk. 2021.
-“Bayes Estimates of Multimodal Density Features Using DNA and Economic
-Data.” *SSRN Electronic Journal*.
-<https://doi.org/10.2139/ssrn.3783351>.
-
-</div>
 
 <div id="ref-malsiner-walli_model-based_2016" class="csl-entry">
 

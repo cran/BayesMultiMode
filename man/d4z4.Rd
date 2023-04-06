@@ -3,7 +3,7 @@
 \docType{data}
 \name{d4z4}
 \alias{d4z4}
-\title{DNA data}
+\title{Autosomal macrosatellite repeats d4z4}
 \format{
 A vector of counts with 410 elements.
 }
@@ -11,8 +11,11 @@ A vector of counts with 410 elements.
 d4z4
 }
 \description{
-Macrosatellite repeat D4Z4 (4q).
-Locus (hg18): 4q35.2; Unit (kb): 3.3; Encoded product: DUX4.
+Macrosatellite repeats D4Z4 in the subtelomere of chromosome 4q.\cr
+Locus (hg18): 4q35.2 \cr
+Unit (kb): 3.3 \cr
+Restriction enzyme: EcoRI + HindIII/EcoRI + BlnI/XapI \cr
+Encoded product : DUX4
 }
 \references{
 \insertRef{schaap_genome-wide_2013}{BayesMultiMode}
