@@ -1,16 +1,35 @@
 #' Modal fixed-point algorithm
 #' 
-#' Algorithm for estimating modes in mixture of Normal distributions.
+#' Algorithm for estimating modes in mixture of Normal distributions from Carreira-Perpinan (2000).
 #' 
-#' @param mcmc Vector of estimated mixture parameters
-#' @param data Vector of observations used for estimating the mixture
+#' @param mcmc Vector of estimated mixture parameters.
+#' @param data Vector of observations used for estimating the mixture.
 #' @param pars_names Names of the mixture parameters; first element should 
 #' correspond to the mixture proportions; second to the mean; third to the 
 #' standard deviation.
-#' @param tol_x Tolerance parameter for distance in-between modes; default is sd(data)/10; if two modes are closer than tol_x, only the first estimated mode is kept.
-#' @param show_plot If true show the data and estimated modes; default is false
+#' @param tol_x Tolerance parameter for distance in-between modes; default is sd(data)/10; if two modes are closer than \code{tol_x}, only the first estimated mode is kept.
+#' @param tol_conv Tolerance parameter for convergence of the algorithm; default is 1e-8.
+#' @param show_plot If true show the data and estimated modes; default is false.
 #' 
-#' @return Vector of estimated modes 
+#' @return Vector of estimated modes.
+#' 
+#' @details
+#' 
+#' This algorithm returns the local maxima of the mixture
+#' \deqn{p(x) = \sum_{k=1}^{K}\pi_k p_k(x),}
+#' where \eqn{p_k} comes from the Normal family.
+#' Following Carreira-perpinan (2000), a mode \eqn{x} is found by iterating the two steps:
+#' \deqn{(i) \quad p(k|x^{(n)}) = \frac{\pi_k p_k(x^{(n)})}{p(x^{(n)})},}
+#' \deqn{(ii) \quad x^{(n+1)} = f(x^{(n)}),}
+#' with
+#' \deqn{f(x) = (\sum_k p(k|x) \sigma_k)^{-1}\sum_k p(k|x) \sigma_k \mu_k,}
+#' until convergence, that is, until \eqn{abs(x^{(n+1)}-x^{(n)})< \text{tol}_\text{conv}},
+#' where \eqn{\text{tol}_\text{conv}} is an argument with default value \eqn{1e-8}.
+#' Following Carreira-perpinan (2000), the algorithm is started at each component location.
+#' Separately, it is necessary to identify identical modes which diverge only up to
+#' a small value. By default modes which are closer
+#' than \eqn{sd(y)/10} are merged; this tolerance value can be controlled with the argument
+#' \code{tol_x}.
 #' 
 #' @references
 #' \insertRef{carreira-perpinan_mode-finding_2000}{BayesMultiMode}
@@ -32,7 +51,7 @@
 #' 
 #' @export
 
-fixed_point <- function(mcmc, data, pars_names, tol_x = sd(data)/10, show_plot = F) {
+fixed_point <- function(mcmc, data, pars_names, tol_x = sd(data)/10, tol_conv = 1e-8, show_plot = F) {
   
   ## input checks
   assert_that(is.vector(mcmc) & length(mcmc) >= 3,
@@ -70,13 +89,11 @@ fixed_point <- function(mcmc, data, pars_names, tol_x = sd(data)/10, show_plot =
     x = mu[i]
     delta = 1
     
-    while (delta > 1e-8) {
+    while (delta > tol_conv) {
       iter = iter + 1
       x1 = f_fp(x, p, mu, sigma)
       delta = abs(x - x1)
       x = x1
-      
-      if (is.na(delta)){browser()}
     }
     
     ## check that the mode is not too close to other modes
@@ -109,8 +126,13 @@ fixed_point <- function(mcmc, data, pars_names, tol_x = sd(data)/10, show_plot =
 f_fp <- function(x, p, mu, sigma) {
   pmx = dnorm(x, mu, sigma) * p
   pmx = pmx/sum(pmx)
+  
+  if (any(is.na(pmx))) {
+    # x yields a density of zero
+    pmx = 1/length(pmx)
+  }
 
   f = 1/sum(pmx/sigma^2) * sum(pmx/sigma^2*mu)
-
+  
   return(f)
 }

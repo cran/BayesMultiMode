@@ -13,11 +13,12 @@ stages. First, a mixture distribution is fitted on the data using a
 sparse finite mixture Markov chain Monte Carlo (SFM MCMC) algorithm. The
 number of mixture components does not have to be known; the size of the
 mixture is estimated endogenously through the SFM approach. Second, the
-modes of the estimated mixture at each MCMC are retrieved using
+modes of the estimated mixture in each MCMC draw are retrieved using
 algorithms specifically tailored for mode detection. These estimates are
 then used to construct posterior probabilities for the number of modes,
 their locations and uncertainties, providing a powerful tool for mode
-inference.
+inference. See Basturk et al. (2023) and Cross et al. (2023) for more
+details.
 
 ### Installing BayesMultiMode from CRAN
 
@@ -41,9 +42,10 @@ library(BayesMultiMode)
 ### Using BayesMultiMode for both MCMC estimation and mode inference
 
 `BayesMultiMode` provides a very flexible and efficient MCMC estimation
-approach : it handles mixtures with unknown number of components and
-supports a comprehensive range of mixture distributions, both continuous
-and discrete.
+approach : it handles mixtures with unknown number of components through
+the sparse finite mixture approach of Malsiner-Walli,
+Fruhwirth-Schnatter, and Grun (2016) and supports a comprehensive range
+of mixture distributions, both continuous and discrete.
 
 #### Estimation
 
@@ -96,9 +98,9 @@ plot(bayesmode, max_size = 200)
 summary(bayesmode)
 ```
 
-    ## The posterior probability of the data being multimodal is 0.993 .
+    ## The posterior probability of the data being multimodal is 0.993
     ## 
-    ## The number of estimated modes and their posterior probabilities is:
+    ##  Number of estimated modes and their posterior probabilities:
 
     ##      Number of modes Posterior probabilty
     ## [1,]               1                0.007
@@ -111,26 +113,13 @@ summary(bayesmode)
 `BayesMultiMode` also works on MCMC output generated using external
 software. The function `new_BayesMixture()` creates an object of class
 `BayesMixture` which can then be used as input in the mode inference
-function `bayes_mode()`. Here is an example where the `BNPmix` package
-is used for MCMC estimation.
+function `bayes_mode()`. Here is an example using cyclone intensity data
+(Knapp et al. 2018) and the `BNPmix` package for estimation.
 
 ``` r
 library(BNPmix)
 library(dplyr)
-```
 
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
 y = cyclone %>%
   filter(BASIN == "SI",
          SEASON > "1981") %>%
@@ -143,24 +132,18 @@ PY_result = PYdensity(y,
                       output = list(out_param = TRUE))
 ```
 
-    ## Completed:   200/2000 - in 0.044338 sec
-    ## Completed:   400/2000 - in 0.091791 sec
-    ## Completed:   600/2000 - in 0.148233 sec
-    ## Completed:   800/2000 - in 0.200009 sec
-    ## Completed:   1000/2000 - in 0.248294 sec
-    ## Completed:   1200/2000 - in 0.297524 sec
-    ## Completed:   1400/2000 - in 0.349355 sec
-    ## Completed:   1600/2000 - in 0.402126 sec
-    ## Completed:   1800/2000 - in 0.457695 sec
-    ## Completed:   2000/2000 - in 0.512106 sec
+    ## Completed:   200/2000 - in 0.044977 sec
+    ## Completed:   400/2000 - in 0.095208 sec
+    ## Completed:   600/2000 - in 0.156805 sec
+    ## Completed:   800/2000 - in 0.210785 sec
+    ## Completed:   1000/2000 - in 0.262655 sec
+    ## Completed:   1200/2000 - in 0.316738 sec
+    ## Completed:   1400/2000 - in 0.372312 sec
+    ## Completed:   1600/2000 - in 0.427642 sec
+    ## Completed:   1800/2000 - in 0.485542 sec
+    ## Completed:   2000/2000 - in 0.542392 sec
     ## 
-    ## Estimation done in 0.512113 seconds
-
-``` r
-plot(PY_result)
-```
-
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="70%" style="display: block; margin: auto;" />
+    ## Estimation done in 0.542409 seconds
 
 #### Transforming the output into a mcmc matrix with one column per variable
 
@@ -204,6 +187,16 @@ py_BayesMix = new_BayesMixture(mcmc = mcmc_py,
                                dist_type = "continuous")
 ```
 
+#### Plotting the mixture
+
+``` r
+plot(py_BayesMix)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="70%" style="display: block; margin: auto;" />
+
 #### Mode inference
 
 ``` r
@@ -214,16 +207,16 @@ bayesmode = bayes_mode(py_BayesMix)
 plot(bayesmode, max_size = 200)
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="70%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-11-1.png" width="70%" style="display: block; margin: auto;" />
 
 ``` r
 # Summary 
 summary(bayesmode)
 ```
 
-    ## The posterior probability of the data being multimodal is 1 .
+    ## The posterior probability of the data being multimodal is 1
     ## 
-    ## The number of estimated modes and their posterior probabilities is:
+    ##  Number of estimated modes and their posterior probabilities:
 
     ##      Number of modes Posterior probabilty
     ## [1,]               2                0.897
@@ -231,10 +224,34 @@ summary(bayesmode)
 
 ### References
 
-(Malsiner-Walli, Fruhwirth-Schnatter, and Grun 2016) (Schaap et al.
-2013)
-
 <div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-basturk_2023" class="csl-entry">
+
+Basturk, Nalan, Jamie L. Cross, Peter de Knijff, Lennart Hoogerheide,
+Paul Labonne, and Herman K. van Dijk. 2023. “BayesMultiMode: Bayesian
+Mode Inference in r.” *Tinbergen Institute Discussion Paper TI
+2023-041/III*.
+
+</div>
+
+<div id="ref-cross_2023" class="csl-entry">
+
+Cross, Jamie L., Lennart Hoogerheide, Paul Labonne, and Herman K. van
+Dijk. 2023. “Credible Mode Determination in Multimodal Economic and
+Financial Data Distributions.” *Tinbergen Institute Discussion Paper TI
+2023-038/III*.
+
+</div>
+
+<div id="ref-knapp_international_2018" class="csl-entry">
+
+Knapp, Kenneth R., Howard J. Diamond, Kossin J. P., Michael C. Kruk, and
+C. J. Schreck. 2018. “International Best Track Archive for Climate
+Stewardship (IBTrACS) Project, Version 4.” *NOAA National Centers for
+Environmental Information*. <https://doi.org/10.1175/2009BAMS2755.1>.
+
+</div>
 
 <div id="ref-malsiner-walli_model-based_2016" class="csl-entry">
 
@@ -242,18 +259,6 @@ Malsiner-Walli, Gertraud, Sylvia Fruhwirth-Schnatter, and Bettina Grun.
 2016. “Model-Based Clustering Based on Sparse Finite Gaussian Mixtures.”
 *Statistics and Computing* 26 (1): 303–24.
 <https://doi.org/10.1007/s11222-014-9500-2>.
-
-</div>
-
-<div id="ref-schaap_genome-wide_2013" class="csl-entry">
-
-Schaap, Mireille, Richard JLF Lemmers, Roel Maassen, Patrick J. van der
-Vliet, Lennart F. Hoogerheide, Herman K. van Dijk, Nalan Basturk, Peter
-de Knijff, and Silvère M. van der Maarel. 2013. “Genome-Wide Analysis of
-Macrosatellite Repeat Copy Number Variation in Worldwide Populations:
-Evidence for Differences and Commonalities in Size Distributions and
-Size Restrictions.” *BMC Genomics* 14 (1): 143.
-<https://doi.org/10.1186/1471-2164-14-143>.
 
 </div>
 

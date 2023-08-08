@@ -1,6 +1,8 @@
-#' Plot an estimated mixture for a given number of draws with an histogram of the data.
+#' Plot method for \code{BayesMixture} objects
 #' 
-#' @param x An object of class BayesMixture.
+#' Plot an estimated mixture for a given number of draws with a frequency distribution of the data.
+#' 
+#' @param x An object of class \code{BayesMixture}.
 #' @param max_size The number of MCMC draws to plot.
 #' @param transparency transparency of the density lines. Default is 0.1. Should be greater than 0 and below or equal to 1.
 #' @param ... Not used.
@@ -43,8 +45,7 @@ plot.BayesMixture <- function(x, max_size = 250,
       xlab("") + ylab("Density") +
       geom_histogram(aes(y = after_stat(density)),
                      fill="grey33",
-                     colour = "white",
-                     bins = 70)
+                     colour = "white")
     
     ## plot the mixture for each draw
     for (i in sample(nrow(mcmc),min(nrow(mcmc), max_size))) {
@@ -55,7 +56,8 @@ plot.BayesMixture <- function(x, max_size = 250,
       }
       
       colnames(pars) <- pars_names
-      
+      pars = na.omit(pars)
+     
       g = g +
         geom_function(fun = dist_mixture,
                       args = list(dist = dist,
@@ -116,7 +118,7 @@ plot.BayesMixture <- function(x, max_size = 250,
     g = ggplot(df_y, aes(x=x)) + 
       theme_gg +
       theme(legend.position="none") +
-      xlab("") + ylab("Density") +
+      xlab("") + ylab("Probability") +
       geom_col(data = filter(df_y,component=="1"),aes(y=density,fill="grey33"),colour="white",alpha=1) +
       geom_line(aes(y=value,colour=component),alpha= transparency) +
       scale_colour_manual(values=rep("#FF6347",length(unique(df_y$component)))) +
@@ -130,8 +132,9 @@ plot.BayesMixture <- function(x, max_size = 250,
 }
 
 
-#' Plot Bayesian mode estimates.
-#' @param x An object of class BayesMode.
+#' Plot method for \code{BayesMode} objects
+#' 
+#' @param x An object of class \code{BayesMode}.
 #' @param graphs which plot to show ? Default is all three c("p1", "number", "loc").
 #' @param ... Not used.
 #' 
@@ -146,6 +149,8 @@ plot.BayesMode <- function(x, graphs = c("p1", "number", "loc"), ...) {
   stopifnot(inherits(x, "BayesMode"))
   assert_that(is.vector(graphs) & is.character(graphs),
               msg = "graphs should be a character vector")
+  assert_that(sum(graphs %in% c("p1", "number", "loc"))>=1,
+              msg = "graphs should include at least p1, number or loc")
   
   modes = x$modes
   p1 = x$p1
@@ -191,24 +196,29 @@ plot.BayesMode <- function(x, graphs = c("p1", "number", "loc"), ...) {
   plot_list = list()
   i = 0
   
+  widths_p = rep(NA, length(graphs))
+  
   if("p1" %in% graphs) {
     i = i + 1
     plot_list[[i]] <- g0
+    widths_p[i] = 0.7
   }
   
   if("number" %in% graphs) {
     i = i + 1
     plot_list[[i]] <- g2
+    widths_p[i] = 1
   }
   
   if("loc" %in% graphs) {
     i = i + 1
     plot_list[[i]] <- g1
+    widths_p[i] = 1
   }
   
   if (i > 1) {
     g <- ggarrange(plotlist = plot_list,
-                   ncol = 3, nrow = 1, widths = c(0.7,1, 1))  
+                   ncol = length(graphs), nrow = 1, widths = widths_p)  
   } else {
     g <- plot_list[[i]] 
   }

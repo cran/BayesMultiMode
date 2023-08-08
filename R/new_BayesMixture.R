@@ -1,27 +1,29 @@
-#' Creating a S3 object of class `BayesMixture`
+#' Creating a S3 object of class \code{BayesMixture}
 #' 
-#' Function for creating an object of class `bayes_estimation()` which can subsequently be used as argument in `bayes_mode()`.
+#' Function for creating an object of class \code{BayesMixture} which can subsequently be used as argument in [bayes_mode()].
+#' This function is useful for users who want to use the mode inference functions of the package with MCMC output generated using 
+#' other software packages.
 #' 
-#' @param mcmc A matrix of MCMC draws
-#' @param data A vector containing the data used for estimating the model and generating the MCMC draws
-#' @param K Number of mixture components
-#' @param burnin Number of draws to discard as burnin
+#' @param mcmc A matrix of MCMC draws.
+#' @param data A vector containing the data used for estimating the model and generating the MCMC draws.
+#' @param K Number of mixture components.
+#' @param burnin Number of draws to discard as burnin.
 #' @param dist Distribution family of the mixture components supported by
-#' the package (e.g. "normal", "student", "skew_normal" or "shifted_poisson")
+#' the package (e.g. "normal", "student", "skew_normal" or "shifted_poisson").
 #' @param pars_names Names of the mixture parameters; first element should 
 #' correspond to the mixture proportions.
 #' @param pdf_func Pdf or pmf of the mixture components;
 #' this input is used only if dist_name is invalid or NULL.
-#' @param dist_type Either "continuous" or "discrete"
+#' @param dist_type Either "continuous" or "discrete".
 #' 
 #' @returns
-#' A list of class `BayesMixture` containing :
+#' A list of class \code{BayesMixture} containing:
 #' \itemize{
-#'  \item{data}{ - Same as argument}
-#'  \item{dist_type}{ - Same as argument}
-#'  \item{pars_names}{ - Same as argument}
-#'  \item{mcmc}{ - Matrix of MCMC draws where the rows corresponding to burnin have been discarded}
-#'  \item{mcmc_all}{ - Original matrix of MCMC draws}
+#'  \item{data}{ - Same as argument.}
+#'  \item{dist_type}{ - Same as argument.}
+#'  \item{pars_names}{ - Same as argument.}
+#'  \item{mcmc}{ - Matrix of MCMC draws where the rows corresponding to burnin have been discarded.}
+#'  \item{mcmc_all}{ - Original matrix of MCMC draws.}
 #' }
 #' 
 #' @importFrom posterior as_draws_matrix
@@ -30,6 +32,30 @@
 #' @importFrom stringr str_to_lower
 #' @importFrom stringr str_replace
 #' @importFrom stringr str_locate
+#' 
+#' @examples
+#' 
+#' # Example with a Student t ================================================
+#' mu = c(0.5,6)
+#' sigma = c(1,2)
+#' nu = c(5,5)
+#' p = c(0.8,0.2)
+#' params = c(eta = p, mu = mu, sigma = sigma, nu = nu)
+#' pars_names = c("eta", "mu", "sigma", "nu")
+#' dist_type = "continuous"
+#'
+#' data = c(sn::rst(p[1]*1000, mu[1], sigma[1], nu = nu[1]),
+#'          sn::rst(p[2]*1000, mu[2], sigma[2], nu = nu[2]))
+#'
+#' fit = c(eta = p, mu = mu, sigma = sigma, nu = nu)
+#' fit = rbind(fit, fit)
+#' 
+#' pdf_func = function(x, pars) {
+#'   sn::dst(x, pars["mu"], pars["sigma"], pars["xi"], pars["nu"])
+#' }
+#' 
+#' BM = new_BayesMixture(fit, data, K = 2, burnin = 1,
+#' pars_names = pars_names, pdf_func = pdf_func, dist_type = dist_type)
 #' 
 #' @export
 
@@ -118,7 +144,7 @@ new_BayesMixture <- function(mcmc,
   }
 
   mcmc_all = mcmc_new
-  mcmc = mcmc_all[(burnin+1):nrow(mcmc_all), ]
+  mcmc = mcmc_all[(burnin+1):nrow(mcmc_all), ,drop = FALSE]
   
   
   if (dist %in% c("normal", "skew_normal",
@@ -127,6 +153,8 @@ new_BayesMixture <- function(mcmc,
   } else {
     BayesMix$dist = "NA"
     BayesMix$pdf_func = pdf_func
+    assert_that(!is.null(pdf_func),
+                msg = "pdf_func is missing")
   }
   
   BayesMix$pars_names = pars_names
