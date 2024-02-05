@@ -1,7 +1,7 @@
 Package: BayesMultiMode
 Type: Package
 Title: Bayesian Mode Inference
-Version: 0.6.0
+Version: 0.7.0
 Authors@R: c(person(given = "Nalan", family = "Baştürk", role = "aut"),
   person(given = "Jamie", family = "Cross", role = "aut"),
   person(given = "Peter", family = "de Knijff", role = "aut"),
@@ -20,7 +20,7 @@ Description: A Bayesian approach for mode inference which works in two steps. Fi
 License: GPL (>= 3)
 Imports: assertthat, bayesplot, dplyr, ggplot2, ggpubr, gtools,
         magrittr, MCMCglmm, mvtnorm, posterior, sn, stringr, tidyr,
-        Rdpack, scales
+        Rdpack
 Depends: R (>= 3.5.0)
 Suggests: testthat (>= 3.0.0)
 RdMacros: Rdpack
@@ -29,9 +29,9 @@ LazyData: true
 URL: https://github.com/paullabonne/BayesMultiMode
 BugReports: https://github.com/paullabonne/BayesMultiMode/issues
 NeedsCompilation: no
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Config/testthat/edition: 3
-Packaged: 2023-08-08 10:28:10 UTC; paullabonne
+Packaged: 2024-02-05 16:09:05 UTC; paullabonne
 Author: Nalan Baştürk [aut],
   Jamie Cross [aut],
   Peter de Knijff [aut],
@@ -40,4 +40,4 @@ Author: Nalan Baştürk [aut],
   Herman van Dijk [aut]
 Maintainer: Paul Labonne <paul.labonne@bi.no>
 Repository: CRAN
-Date/Publication: 2023-08-08 10:50:06 UTC
+Date/Publication: 2024-02-05 22:00:07 UTC

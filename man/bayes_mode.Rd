@@ -7,56 +7,59 @@
 bayes_mode(
   BayesMix,
   rd = 1,
+  tol_mixp = 0,
   tol_x = sd(BayesMix$data)/10,
   tol_conv = 1e-08,
-  show_plot = FALSE,
-  nb_iter = NULL
+  inside_range = TRUE
 )
 }
 \arguments{
-\item{BayesMix}{An object of class \code{BayesMixture}.}
+\item{BayesMix}{An object of class \code{bayes_mixture} generated with either \code{\link[=bayes_fit]{bayes_fit()}} or \code{\link[=bayes_mixture]{bayes_mixture()}}.}
 
-\item{rd}{Rounding parameter.}
+\item{rd}{(for continuous mixtures) Integer indicating the number of decimal places when rounding the distribution's support.
+It is necessary to compute posterior probabilities of mode locations.}
 
-\item{tol_x}{Tolerance parameter for distance in-between modes; default is sd(data)/10 where data is an element of argument \code{BayesMix}.
+\item{tol_mixp}{Components with a mixture proportion below \code{tol_mixp} are discarded when estimating modes;
+note that this does not apply to the biggest component so that it is not possible to discard all components;
+should be between \code{0} and \code{1}; default is \code{0}.}
+
+\item{tol_x}{(for continuous mixtures) Tolerance parameter for distance in-between modes; default is \code{sd(data)/10}
+where data is the vector of observations from \code{BayesMix}.
 If two modes are closer than \code{tol_x}, only the first estimated mode is kept.}
 
-\item{tol_conv}{Tolerance parameter for convergence of the algorithm; default is 1e-8.
-Not needed for mixtures of discrete distributions.}
+\item{tol_conv}{(for continuous mixtures) Tolerance parameter for convergence of the algorithm; default is \code{1e-8}.}
 
-\item{show_plot}{Show density with estimated mode as vertical bars ?}
-
-\item{nb_iter}{Number of draws on which the mode-finding algorithm is run; default is NULL which means the algorithm is run on all draws.}
+\item{inside_range}{Should modes outside of the observations range be discarded? Default is \code{TRUE}.
+This sometimes occurs with very small components when K is large.}
 }
 \value{
-A list of class \code{BayesMode} containing
-\itemize{
- \item{data}{ - from \code{BayesMix}.}
- \item{dist}{ - from \code{BayesMix}.}
- \item{dist_type}{ - from \code{BayesMix}.}
- \item{pars_names}{ - from \code{BayesMix}.}
- \item{modes}{ - Matrix with a row for each draw and columns showing modes.}
- \item{p1}{ - Posterior probability of unimodality.}
- \item{tb_nb_modes}{ - Matrix showing posterior probabilities for the number of modes.}
- \item{table_location}{ - Matrix showing the posterior probabilities for location points being modes.}
-}
+A list of class \code{bayes_mode} containing:
+\item{data}{From \code{BayesMix}.}
+\item{dist}{From \code{BayesMix}.}
+\item{dist_type}{From \code{BayesMix}.}
+\item{pars_names}{From \code{BayesMix}.}
+\item{modes}{Matrix with a row for each draw and columns showing modes.}
+\item{p1}{Posterior probability of unimodality.}
+\item{tb_nb_modes}{Matrix showing posterior probabilities for the number of modes.}
+\item{table_location}{Matrix showing posterior probabilities for mode locations.}
+\item{algo}{Algorithm used for mode estimation.}
+\item{range}{Range outside which modes are discarded if \code{inside_range} is \code{TRUE}.}
+\item{BayesMix}{\code{BayesMix}.}
 }
 \description{
-This function estimates modes for each mcmc draw and uses these estimates to compute posterior
-probabilities for the number of modes and their locations (following the approach of Cross et al. 2023).
-The fixed-point algorithm of Carreira-Perpinan (2000) is used for Gaussian mixtures.
-The Modal EM algorithm of Li et al. (2007) is used for other continuous mixtures.
-A basic algorithm is used for discrete mixtures (see Cross et al. 2023).
+Bayesian inference on the modes in a univariate mixture estimated with MCMC methods, see \insertCite{Cross2024;textual}{BayesMultiMode}.
+Provides posterior probabilities of the number of modes and their locations.
+Under the hood it calls the function \code{\link[=mix_mode]{mix_mode()}} to find the modes in each MCMC draw.
 }
 \details{
 Each draw from the MCMC output after burnin, \eqn{\theta^{(d)}, \quad d = 1,...,D}, leads to a posterior predictive probability
-density/mass function: 
+density/mass function:
 \deqn{p(y | \theta^{(d)}) =\sum_{k=1}^{K} \pi_k^{(d)} p(y | \theta_k^{(d)}).}
 Using this function, the mode in draw \eqn{d} \eqn{y_{m}^{(d)}}, \eqn{m = 1,..., M^{(d)}},
 where \eqn{M^{(d)}} is the number of modes, are estimated using the algorithm mentioned
 in the description above.
 
-After running this procedure across all retained posterior draws, 
+After running this procedure across all retained posterior draws,
 we compute the posterior probability for the number of modes being \eqn{M} as:
 \deqn{P(\#\text{modes}=M)=\frac{1}{D}\sum_{d=1}^{D}1(M^{(d)} = M).}
 Similarly, posterior probabilities for locations of the modes are given by:
@@ -73,76 +76,72 @@ set.seed(123)
 y = galaxy
 
 # estimation
-bayesmix = bayes_estimation(data = y,
+bayesmix = bayes_fit(data = y,
                            K = 5, #not many to run the example rapidly
                            dist = "normal",
                            nb_iter = 500, #not many to run the example rapidly
                            burnin = 100)
 
 # mode estimation
-bayesmode = bayes_mode(bayesmix)
+BayesMode = bayes_mode(bayesmix)
 
 # plot 
-# plot(bayesmode, max_size = 200)
+# plot(BayesMode, max_size = 200)
 
 # summary 
-# summary(bayesmode)
+# summary(BayesMode)
 
 # Example with DNA data ================================================
 set.seed(123) 
 
-# retrieve galaxy data
+# retrieve DNA data
 y = d4z4
 
 # estimation
-bayesmix = bayes_estimation(data = y,
+bayesmix = bayes_fit(data = y,
                            K = 5, #not many to run the example rapidly
                            dist = "shifted_poisson",
                            nb_iter = 500, #not many to run the example rapidly
                            burnin = 100)
 
 # mode estimation
-bayesmode = bayes_mode(bayesmix)
+BayesMode = bayes_mode(bayesmix)
 
 # plot 
-# plot(bayesmode, max_size = 200)
+# plot(BayesMode, max_size = 200)
 
 # summary 
-# summary(bayesmode)
+# summary(BayesMode)
 
 # Example with a Student t ================================================
 mu = c(0.5,6)
 sigma = c(1,2)
 nu = c(5,5)
-p = c(0.8,0.2)
-params = c(eta = p, mu = mu, sigma = sigma, nu = nu)
-pars_names = c("eta", "mu", "sigma", "nu")
-dist_type = "continuous"
-
+p = c(0.8,0.2)#'
 data = c(sn::rst(p[1]*1000, mu[1], sigma[1], nu = nu[1]),
          sn::rst(p[2]*1000, mu[2], sigma[2], nu = nu[2]))
 
-fit = c(eta = p, mu = mu, sigma = sigma, nu = nu)
+fit = c(eta = p, mu = mu, sigma = sigma, nu = nu, xi = c(0,0))
 fit = rbind(fit, fit)
 
 pdf_func = function(x, pars) {
   sn::dst(x, pars["mu"], pars["sigma"], pars["xi"], pars["nu"])
 }
 
-bayesmix = new_BayesMixture(fit, data, K = 2, burnin = 1,
-pars_names = pars_names, pdf_func = pdf_func, dist_type = dist_type)
+dist_type = "continuous"
 
-bayesmode = bayes_mode(bayesmix)
+bayesmix = bayes_mixture(fit, data, burnin = 1, 
+pdf_func = pdf_func, dist_type = dist_type, loc = "mu")
+
+BayesMode = bayes_mode(bayesmix)
 
 # plot 
-# plot(bayesmode, max_size = 200)
+# plot(BayesMode, max_size = 200)
 
 # summary 
-# summary(bayesmode)
+# summary(BayesMode)
 
 }
 \references{
-\insertRef{cross_2023}{BayesMultiMode}
-\insertRef{carreira-perpinan_mode-finding_2000}{BayesMultiMode}\cr\cr
-\insertRef{li_nonparametric_2007}{BayesMultiMode}
+\insertAllCited{}
 }

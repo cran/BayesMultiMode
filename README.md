@@ -17,7 +17,7 @@ modes of the estimated mixture in each MCMC draw are retrieved using
 algorithms specifically tailored for mode detection. These estimates are
 then used to construct posterior probabilities for the number of modes,
 their locations and uncertainties, providing a powerful tool for mode
-inference. See Basturk et al. (2023) and Cross et al. (2023) for more
+inference. See Basturk et al. (2023) and Cross et al. (2024) for more
 details.
 
 ### Installing BayesMultiMode from CRAN
@@ -39,7 +39,7 @@ devtools::install_github("paullabonne/BayesMultiMode")
 library(BayesMultiMode)
 ```
 
-### Using BayesMultiMode for both MCMC estimation and mode inference
+### BayesMultiMode for MCMC estimation and mode inference
 
 `BayesMultiMode` provides a very flexible and efficient MCMC estimation
 approach : it handles mixtures with unknown number of components through
@@ -56,27 +56,14 @@ set.seed(123)
 y = galaxy
 
 # estimation
-bayesmix = bayes_estimation(data = y,
-                            K = 10,
-                            dist = "normal",
-                            nb_iter = 2000,
-                            burnin = 1000)
-```
+bayesmix = bayes_fit(data = y,
+                     K = 10,
+                     dist = "normal",
+                     nb_iter = 2000,
+                     burnin = 1000,
+                     print = F)
 
-    ## 10  % draws finished
-    ## 20  % draws finished
-    ## 30  % draws finished
-    ## 40  % draws finished
-    ## 50  % draws finished
-    ## 60  % draws finished
-    ## 70  % draws finished
-    ## 80  % draws finished
-    ## 90  % draws finished
-    ## 100  % draws finished
-
-``` r
-# plot estimated mixture
-plot(bayesmix, max_size = 200)
+plot(bayesmix, draws = 200)
 ```
 
 <img src="man/figures/README-unnamed-chunk-5-1.png" width="70%" style="display: block; margin: auto;" />
@@ -87,34 +74,35 @@ plot(bayesmix, max_size = 200)
 # mode estimation
 bayesmode = bayes_mode(bayesmix)
 
-# plot 
-plot(bayesmode, max_size = 200)
+plot(bayesmode)
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" />
 
 ``` r
-# Summary 
 summary(bayesmode)
 ```
 
-    ## The posterior probability of the data being multimodal is 0.993
+    ## The posterior probability of the data being multimodal is 0.999
     ## 
     ##  Number of estimated modes and their posterior probabilities:
 
     ##      Number of modes Posterior probabilty
-    ## [1,]               1                0.007
-    ## [2,]               2                0.133
-    ## [3,]               3                0.840
-    ## [4,]               4                0.020
+    ## [1,]               1                0.001
+    ## [2,]               2                0.031
+    ## [3,]               3                0.919
+    ## [4,]               4                0.047
+    ## [5,]               5                0.002
 
-### Using BayesMultiMode for mode inference with external MCMC output
+### BayesMultiMode for mode inference with external MCMC output
 
 `BayesMultiMode` also works on MCMC output generated using external
-software. The function `new_BayesMixture()` creates an object of class
-`BayesMixture` which can then be used as input in the mode inference
+software. The function `bayes_mixture()` creates an object of class
+`bayes_mixture` which can then be used as input in the mode inference
 function `bayes_mode()`. Here is an example using cyclone intensity data
-(Knapp et al. 2018) and the `BNPmix` package for estimation.
+(Knapp et al. 2018) and the `BNPmix` package for estimation. More
+examples can be found
+[here](https://github.com/paullabonne/BayesMultiMode/blob/main/external_comp.md).
 
 ``` r
 library(BNPmix)
@@ -123,33 +111,20 @@ library(dplyr)
 y = cyclone %>%
   filter(BASIN == "SI",
          SEASON > "1981") %>%
-  select(max_wind) %>%
+  dplyr::select(max_wind) %>%
   unlist()
 
 ## estimation
 PY_result = PYdensity(y,
-                      mcmc = list(niter = 2000, nburn = 1000),
+                      mcmc = list(niter = 2000,
+                                  nburn = 1000,
+                                  print_message = FALSE),
                       output = list(out_param = TRUE))
 ```
-
-    ## Completed:   200/2000 - in 0.044977 sec
-    ## Completed:   400/2000 - in 0.095208 sec
-    ## Completed:   600/2000 - in 0.156805 sec
-    ## Completed:   800/2000 - in 0.210785 sec
-    ## Completed:   1000/2000 - in 0.262655 sec
-    ## Completed:   1200/2000 - in 0.316738 sec
-    ## Completed:   1400/2000 - in 0.372312 sec
-    ## Completed:   1600/2000 - in 0.427642 sec
-    ## Completed:   1800/2000 - in 0.485542 sec
-    ## Completed:   2000/2000 - in 0.542392 sec
-    ## 
-    ## Estimation done in 0.542409 seconds
 
 #### Transforming the output into a mcmc matrix with one column per variable
 
 ``` r
-library(dplyr)
-
 mcmc_py = list()
 
 for (i in 1:length(PY_result$p)) {
@@ -168,23 +143,17 @@ for (i in 1:length(PY_result$p)) {
   mcmc_py[[i]] = draw
 }
 
-mcmc_py = bind_rows(mcmc_py)
+mcmc_py = as.matrix(bind_rows(mcmc_py))
 ```
 
-#### Creating an object of class `BayesMixture`
+#### Creating an object of class `bayes_mixture`
 
 ``` r
-pars_names = c(eta = "eta",
-               mu = "mu",
-               sigma = "sigma")
-
-py_BayesMix = new_BayesMixture(mcmc = mcmc_py,
-                               data = y,
-                               K = (ncol(mcmc_py)-1)/3,
-                               burnin = 0, # the burnin has already been discarded
-                               dist = "normal",
-                               pars_names = pars_names,
-                               dist_type = "continuous")
+py_BayesMix = bayes_mixture(mcmc = mcmc_py,
+                            data = y,
+                            burnin = 0, # the burnin has already been discarded
+                            dist = "normal",
+                            vars_to_keep = c("eta", "mu", "sigma"))
 ```
 
 #### Plotting the mixture
@@ -192,8 +161,6 @@ py_BayesMix = new_BayesMixture(mcmc = mcmc_py,
 ``` r
 plot(py_BayesMix)
 ```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="70%" style="display: block; margin: auto;" />
 
@@ -203,8 +170,8 @@ plot(py_BayesMix)
 # mode estimation
 bayesmode = bayes_mode(py_BayesMix)
 
-# plot ¨
-plot(bayesmode, max_size = 200)
+# plot
+plot(bayesmode)
 ```
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" width="70%" style="display: block; margin: auto;" />
@@ -222,6 +189,42 @@ summary(bayesmode)
     ## [1,]               2                0.897
     ## [2,]               3                0.103
 
+### BayesMultiMode for mode estimation in mixtures estimated with ML
+
+It is possible to use `BayesMultiMode` to find modes in mixtures
+estimated using maximum likelihood and the EM algorithm. Below is an
+example using the popular package `mclust`. More examples can be found
+[here](https://github.com/paullabonne/BayesMultiMode/blob/main/external_comp.md).
+
+``` r
+set.seed(123)
+library(mclust)
+```
+
+    ## Package 'mclust' version 6.0.0
+    ## Type 'citation("mclust")' for citing this R package in publications.
+
+``` r
+y = cyclone %>%
+  filter(BASIN == "SI",
+         SEASON > "1981") %>%
+  dplyr::select(max_wind) %>%
+  unlist()
+
+fit = Mclust(y)
+
+pars = c(eta = fit$parameters$pro,
+         mu = fit$parameters$mean,
+         sigma = sqrt(fit$parameters$variance$sigmasq))
+
+mix = mixture(pars, dist = "normal") # create new object of class Mixture
+modes = mix_mode(mix) # estimate modes
+
+plot(modes)
+```
+
+![](man/figures/README-unnamed-chunk-12-1.png)<!-- -->
+
 ### References
 
 <div id="refs" class="references csl-bib-body hanging-indent">
@@ -235,12 +238,12 @@ Mode Inference in r.” *Tinbergen Institute Discussion Paper TI
 
 </div>
 
-<div id="ref-cross_2023" class="csl-entry">
+<div id="ref-Cross2024" class="csl-entry">
 
 Cross, Jamie L., Lennart Hoogerheide, Paul Labonne, and Herman K. van
-Dijk. 2023. “Credible Mode Determination in Multimodal Economic and
-Financial Data Distributions.” *Tinbergen Institute Discussion Paper TI
-2023-038/III*.
+Dijk. 2024. “Bayesian Mode Inference for Discrete Distributions in
+Economics and Finance.” *Economics Letters* 235 (February): 111579.
+<https://doi.org/10.1016/j.econlet.2024.111579>.
 
 </div>
 
