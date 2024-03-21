@@ -83,16 +83,26 @@ plot(bayesmode)
 summary(bayesmode)
 ```
 
-    ## The posterior probability of the data being multimodal is 0.999
+    ## Posterior probability of multimodality is 0.993 
     ## 
-    ##  Number of estimated modes and their posterior probabilities:
-
-    ##      Number of modes Posterior probabilty
-    ## [1,]               1                0.001
-    ## [2,]               2                0.031
-    ## [3,]               3                0.919
-    ## [4,]               4                0.047
-    ## [5,]               5                0.002
+    ## Inference results on the number of modes:
+    ##   p_nb_modes (matrix, dim 4x2): 
+    ##      number of modes posterior probability
+    ## [1,]               1                 0.007
+    ## [2,]               2                 0.133
+    ## [3,]               3                 0.840
+    ## [4,]               4                 0.020
+    ## 
+    ## Inference results on mode locations:
+    ##   p_loc (matrix, dim 252x2): 
+    ##      mode location posterior probability
+    ## [1,]           9.2                 0.021
+    ## [2,]           9.3                 0.000
+    ## [3,]           9.4                 0.000
+    ## [4,]           9.5                 0.083
+    ## [5,]           9.6                 0.132
+    ## [6,]           9.7                 0.117
+    ## ... (246 more rows)
 
 ### BayesMultiMode for mode inference with external MCMC output
 
@@ -181,13 +191,24 @@ plot(bayesmode)
 summary(bayesmode)
 ```
 
-    ## The posterior probability of the data being multimodal is 1
+    ## Posterior probability of multimodality is 1 
     ## 
-    ##  Number of estimated modes and their posterior probabilities:
-
-    ##      Number of modes Posterior probabilty
-    ## [1,]               2                0.897
-    ## [2,]               3                0.103
+    ## Inference results on the number of modes:
+    ##   p_nb_modes (matrix, dim 2x2): 
+    ##      number of modes posterior probability
+    ## [1,]               2                 0.897
+    ## [2,]               3                 0.103
+    ## 
+    ## Inference results on mode locations:
+    ##   p_loc (matrix, dim 793x2): 
+    ##      mode location posterior probability
+    ## [1,]          40.2                 0.001
+    ## [2,]          40.3                 0.000
+    ## [3,]          40.4                 0.000
+    ## [4,]          40.5                 0.001
+    ## [5,]          40.6                 0.000
+    ## [6,]          40.7                 0.000
+    ## ... (787 more rows)
 
 ### BayesMultiMode for mode estimation in mixtures estimated with ML
 
@@ -199,12 +220,7 @@ example using the popular package `mclust`. More examples can be found
 ``` r
 set.seed(123)
 library(mclust)
-```
 
-    ## Package 'mclust' version 6.0.0
-    ## Type 'citation("mclust")' for citing this R package in publications.
-
-``` r
 y = cyclone %>%
   filter(BASIN == "SI",
          SEASON > "1981") %>%
@@ -217,13 +233,24 @@ pars = c(eta = fit$parameters$pro,
          mu = fit$parameters$mean,
          sigma = sqrt(fit$parameters$variance$sigmasq))
 
-mix = mixture(pars, dist = "normal") # create new object of class Mixture
+mix = mixture(pars, dist = "normal", range = c(min(y), max(y))) # create new object of class Mixture
 modes = mix_mode(mix) # estimate modes
 
 plot(modes)
 ```
 
-![](man/figures/README-unnamed-chunk-12-1.png)<!-- -->
+<img src="man/figures/README-unnamed-chunk-12-1.png" width="50%" style="display: block; margin: auto;" />
+
+``` r
+summary(modes)
+```
+
+    ## Modes of a normal mixture with 3 components.
+    ## - Number of modes found: 3
+    ## - Mode estimation technique: fixed-point algorithm
+    ## - Estimates of mode locations:
+    ##   mode_estimates (numeric vector, dim 3): 
+    ## [1]  41  60 110
 
 ### References
 

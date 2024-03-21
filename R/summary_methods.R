@@ -8,14 +8,15 @@ summary.bayes_mode <- function(object, ...) {
   modes = object$modes
   
   p1 = object$p1
-  cat("The posterior probability of the data being multimodal is", 1-p1)
+  cat("Posterior probability of multimodality is", 1-p1, "\n")
   
-  tb_nb_modes = t(object$tb_nb_modes)
-  colnames(tb_nb_modes) = c("Number of modes", "Posterior probabilty")
-  tb_nb_modes = tb_nb_modes[order(tb_nb_modes[, 1]), ]
+  cat("\nInference results on the number of modes:")
+  cat("\n  p_nb_modes")
+  head_print(t(object$p_nb_modes))
 
-  cat("\n\n Number of estimated modes and their posterior probabilities:\n")
-  tb_nb_modes
+  cat("\nInference results on mode locations:")
+  cat("\n  p_loc")
+  head_print(t(object$p_mode_loc))
 }
 
 
@@ -41,9 +42,12 @@ summary.mix_mode <- function(object, ...) {
     m = "Modes"
   }
   
-  cat("\n",m, "of a", d, "mixture with", K, "components.")
+  cat(m, "of a", d, "mixture with", K, "components.")
   cat("\n- Number of modes found:", Nb_m)
   cat("\n- Mode estimation technique:", object$algo, "algorithm")
+  cat("\n- Estimates of mode locations:")
+  cat("\n  mode_estimates")
+  head_print(round(object$mode_estimates),3)
 }
 
 
@@ -54,13 +58,16 @@ summary.mix_mode <- function(object, ...) {
 #' 
 #' @export
 summary.mixture <- function(object, ...) {
-  cat("\n Estimated mixture distribution.")
+  cat("Estimated mixture distribution.")
   cat("\n- Mixture type:", object$dist_type)
   cat("\n- Number of components:", object$K)
   cat("\n- Distribution family:", object$dist)
   cat("\n- Number of distribution variables:", object$nb_var)
   cat("\n- Names of variables:",
       object$pars_names[object$pars_names!="eta"])
+  cat("\n- Parameter estimates:")
+  cat("\n  pars")
+  head_print(object$pars)
 }
 
 
@@ -82,7 +89,7 @@ summary.bayes_mixture <- function(object, ...) {
     d = object$dist_type
   }
   
-  cat("\n Mixture estimated with a Bayesian MCMC method.")
+  cat("Mixture estimated with a Bayesian MCMC method.")
   cat("\n- Mixture type:", object$dist_type)
   cat("\n- Number of components:", object$K)
   cat("\n- Distribution family:", object$dist)
@@ -93,4 +100,6 @@ summary.bayes_mixture <- function(object, ...) {
   cat("\n\nSummary of MCMC output after burnin:\n")
   print(summarise_draws(object$mcmc))
   cat(paste0("this table can be reproduced with: summarise_draws(",deparse(substitute(object)),"$mcmc)"))
+  message(cat("\n\nNote that label-switching might occur in the MCMC draws becayse BayesMultiMode does not carry out post-processing.",
+          "\nWhile label-switching does not affect mode inference it can affect diagnostic checks.\n"))
 }

@@ -1,3 +1,9 @@
+## Version 0.7.1
+* Range argument not optional any more when plotting mixtures
+* More details in summary methods
+* Added a df to the mode output showing the mixture density in each draw
+* Added message for users to be aware of potential label-switching to summary and plot_trace functions.
+
 ## Version 0.7.0
 * Major changes around the structure of the package
 * bayes_estimation() renamed to bayes_fit()

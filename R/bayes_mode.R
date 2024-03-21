@@ -14,7 +14,9 @@
 #' where data is the vector of observations from `BayesMix`.
 #' If two modes are closer than `tol_x`, only the first estimated mode is kept.
 #' @param tol_conv (for continuous mixtures) Tolerance parameter for convergence of the algorithm; default is `1e-8`.
-#' @param inside_range Should modes outside of the observations range be discarded? Default is `TRUE`.
+#' @param inside_range Should modes outside of `range` be discarded? Default is `TRUE`.
+#' @param range limits of the support where modes are saved (if `inside_range` is `TRUE`);
+#' default is `c(min(BayesMix$data), max(BayesMix$data))`.
 #' This sometimes occurs with very small components when K is large.  
 #' @return A list of class `bayes_mode` containing:
 #'  \item{data}{From `BayesMix`.}
@@ -23,8 +25,9 @@
 #'  \item{pars_names}{From `BayesMix`.}
 #'  \item{modes}{Matrix with a row for each draw and columns showing modes.}
 #'  \item{p1}{Posterior probability of unimodality.}
-#'  \item{tb_nb_modes}{Matrix showing posterior probabilities for the number of modes.}
-#'  \item{table_location}{Matrix showing posterior probabilities for mode locations.}
+#'  \item{p_nb_modes}{Matrix showing posterior probabilities for the number of modes.}
+#'  \item{p_mode_loc}{Matrix showing posterior probabilities for mode locations.}
+#'  \item{mix_density}{Mixture density at all locations in each draw.}
 #'  \item{algo}{Algorithm used for mode estimation.}
 #'  \item{range}{Range outside which modes are discarded if `inside_range` is `TRUE`.}
 #'  \item{BayesMix}{`BayesMix`.}
@@ -51,6 +54,7 @@
 #
 #' @importFrom assertthat assert_that
 #' @importFrom assertthat is.scalar
+#' @importFrom tidyr as_tibble
 #' 
 #' @examples
 #' # Example with galaxy data ================================================
@@ -126,7 +130,7 @@
 #' # summary(BayesMode)
 #'
 #' @export
-bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)/10, tol_conv = 1e-8, inside_range = TRUE) {
+bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)/10, tol_conv = 1e-8, inside_range = TRUE, range = c(min(BayesMix$data), max(BayesMix$data))) {
   assert_that(inherits(BayesMix, "bayes_mixture"), msg = "BayesMix should be an object of class bayes_mixture")
   assert_that(all(c("data", "mcmc", "mcmc_all",
                     "loglik", "K", "dist",
@@ -147,17 +151,23 @@ bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)
   pars_names = BayesMix$pars_names
   loc = BayesMix$loc
   
-  if (dist_type == "continuous") {
-    range = c(min(data) - sd(data), max(data) + sd(data)) 
-  } else {
-    range = c(min(data), max(data))
-  }
+    assert_that(is.vector(range) & length(range) == 2,
+                msg = "range should be a vector of length 2")
+    assert_that(all(is.finite(range)),
+                msg = "lower and upper limits of range should be finite")
+    assert_that(range[2] > range[1],
+                msg = "upper limit of range not greater than lower limit")
+    
+    if (dist %in% c("poisson", "shifted_poisson")) {
+      assert_that(all(range>=0),
+                  msg = "lower limit should be greater or equal than zero when using the Poisson or shifted Poisson.")
+    }
   
   modes = t(apply(mcmc, 1, mix_mode_estimates, dist = dist,
                   pdf_func = pdf_func, dist_type = dist_type,
                   tol_mixp = tol_mixp, tol_x = tol_x, tol_conv = tol_conv,
                   loc = loc, range = range,
-                  inside_range = TRUE))
+                  inside_range = inside_range))
 
   # Number of modes 
   n_modes = apply(!is.na(modes),1,sum) # number of modes in each MCMC draw
@@ -205,8 +215,8 @@ bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)
   
   probs_modes = sum_modes/nrow(mcmc)
   
-  table_location = rbind(mode_range, probs_modes)
-  rownames(table_location) = c("mode location", "posterior probability")
+  p_mode_loc = rbind(mode_range, probs_modes)
+  rownames(p_mode_loc) = c("mode location", "posterior probability")
   
   ##### testing unimodality
   p1 = 0 # posterior probability of unimodality
@@ -221,8 +231,18 @@ bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)
   for (i in 1:length(unique_modes)){
     prob_nb_modes[i] = length(n_modes[n_modes==unique_modes[i]])/nrow(modes)
   }
-  tb_nb_modes = rbind(unique_modes,prob_nb_modes)
-  rownames(tb_nb_modes) = c("number of modes", "posterior probability")
+  p_nb_modes = rbind(unique_modes,prob_nb_modes)
+  rownames(p_nb_modes) = c("number of modes", "posterior probability")
+  # ordering
+  p_nb_modes = p_nb_modes[, order(unique_modes)]
+  
+  # mixture density
+  mix_density = apply(mcmc,1, FUN = dmix, x = mode_range,
+         pars_names = pars_names,
+         pdf_func = pdf_func)
+  mix_density = cbind(mode_range, mix_density)
+  colnames(mix_density) = c("x", paste0("draw",1:nrow(mcmc)))
+  mix_density = as_tibble(mix_density)
   
   bayes_mode = list()
   bayes_mode$data = data
@@ -231,11 +251,12 @@ bayes_mode <- function(BayesMix, rd = 1, tol_mixp = 0, tol_x = sd(BayesMix$data)
   bayes_mode$pars_names = pars_names
   bayes_mode$modes = modes
   bayes_mode$p1 = p1
-  bayes_mode$tb_nb_modes = tb_nb_modes
-  bayes_mode$table_location = table_location
+  bayes_mode$p_nb_modes = p_nb_modes
+  bayes_mode$p_mode_loc = p_mode_loc
   bayes_mode$algo = algo
   bayes_mode$BayesMix = BayesMix
   bayes_mode$range = range
+  bayes_mode$mix_density = mix_density
   
   class(bayes_mode) <- "bayes_mode"
   
@@ -251,10 +272,18 @@ mix_mode_estimates <- function(mcmc, dist = NA_character_, dist_type = NA_charac
   
   mix = mixture(mcmc, dist = dist, pdf_func = pdf_func,
                     dist_type = dist_type, range = range, loc = loc)
+
   modes = mix_mode(mix, tol_mixp, tol_x, tol_conv, type = type)$mode_estimates
   output[1:length(modes)] = modes
   
   return(output)
+}
+
+#' @keywords internal
+dmix <- function(x, pars, pars_names, pdf_func) {
+  pars_mat = vec_to_mat(pars, pars_names)
+  pars_mat = na.omit(pars_mat) # when mcmc contains NA (i.e. BNPmix)
+  pdf_func_mix(x, pars_mat, pdf_func)
 }
 
 #' @keywords internal

@@ -6,7 +6,7 @@
 #' 
 #' @param mcmc A matrix of MCMC draws with one column per variable, e.g. eta1, eta2, ..., mu1, mu2, etc...
 #' @param data Vector of observation used for estimating the model.
-#' @param burnin Number of draws to discard as burnin.
+#' @param burnin Number of draws to discard as burnin; default is `0`.
 #' @param dist Distribution family of the mixture components supported by
 #' the package (i.e. `"normal"`, `"student"`, `"skew_normal"` or `"shifted_poisson"`).
 #' If left unspecified, `pdf_func` is required.
@@ -19,7 +19,7 @@
 #' @param dist_type Either `"continuous"` or `"discrete"`.
 #' @param loglik Vector showing the log likelihood at each MCMC draw.
 #' @param vars_to_keep (optional) Character vector containing the names
-#' of the variables to keep in `mcmc`.
+#' of the variables to keep in `mcmc`, e.g. `c("eta", "mu", "sigma")`.
 #' @param vars_to_rename (optional) Use for renaming variables/parameters in `mcmc`.
 #' A named character vector where the names are the new variable names
 #' and the elements the variables in `mcmc`, e.g. c("new_name" = "old_name").
@@ -91,7 +91,7 @@
 
 bayes_mixture <- function(mcmc,
                           data,
-                          burnin,
+                          burnin = 0,
                           dist = NA_character_,
                           pdf_func = NULL,
                           dist_type = NA_character_,

@@ -79,9 +79,9 @@
 #' mu = c(0,5)
 #' sigma = c(1,2)
 #' p = c(0.5,0.5)
-#'
+#' 
 #' params = c(eta = p, mu = mu, sigma = sigma)
-#' mix = mixture(params, dist = "normal")
+#' mix = mixture(params, dist = "normal", range = c(-5,15))
 #' modes = mix_mode(mix)
 #' 
 #' # summary(modes)
@@ -95,7 +95,7 @@
 #' params = c(eta = p, xi = xi, omega = omega, alpha = alpha)
 #' dist = "skew_normal"
 #' 
-#' mix = mixture(params, dist = dist)
+#' mix = mixture(params, dist = dist, range = c(-5,15))
 #' modes = mix_mode(mix)
 #' # summary(modes)
 #' # plot(modes)
@@ -113,7 +113,7 @@
 #' }
 #' 
 #' mix = mixture(params, pdf_func = pdf_func,
-#' dist_type = "continuous", loc = "mu")
+#' dist_type = "continuous", loc = "mu", range = c(-5,15))
 #' modes = mix_mode(mix)
 #' 
 #' # summary(modes)
@@ -131,7 +131,7 @@
 #' modes = mix_mode(mix)
 #'
 #' # summary(modes)
-#' # plot(modes, from = 0, to = 20)
+#' # plot(modes)
 #' 
 #' # Example with an arbitrary discrete distribution =======================
 #' mu = c(20,5)
@@ -149,7 +149,7 @@
 #' modes = mix_mode(mix)
 #' 
 #' # summary(modes)
-#' # plot(modes, from = 0, to = 50)
+#' # plot(modes)
 #' 
 #' @export
 
@@ -175,6 +175,7 @@ mix_mode <- function(mixture, tol_mixp = 0, tol_x = 1e-6, tol_conv = 1e-8, type 
   mode$pdf_func = pdf_func
   mode$K = mixture$K
   mode$nb_var = mixture$nb_var
+  mode$range = range
   
   pars_mat <- vec_to_mat(pars, pars_names)
   tol_mixp_c = min(tol_mixp, pars_mat[, "eta"]) # the component with highest proportion cannot be excluded

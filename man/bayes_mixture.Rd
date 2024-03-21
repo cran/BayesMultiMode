@@ -7,7 +7,7 @@
 bayes_mixture(
   mcmc,
   data,
-  burnin,
+  burnin = 0,
   dist = NA_character_,
   pdf_func = NULL,
   dist_type = NA_character_,
@@ -22,7 +22,7 @@ bayes_mixture(
 
 \item{data}{Vector of observation used for estimating the model.}
 
-\item{burnin}{Number of draws to discard as burnin.}
+\item{burnin}{Number of draws to discard as burnin; default is \code{0}.}
 
 \item{dist}{Distribution family of the mixture components supported by
 the package (i.e. \code{"normal"}, \code{"student"}, \code{"skew_normal"} or \code{"shifted_poisson"}).
@@ -40,7 +40,7 @@ The names of \code{pars} should correspond to variables in \code{mcmc}, e.g. \co
 \item{loglik}{Vector showing the log likelihood at each MCMC draw.}
 
 \item{vars_to_keep}{(optional) Character vector containing the names
-of the variables to keep in \code{mcmc}.}
+of the variables to keep in \code{mcmc}, e.g. \code{c("eta", "mu", "sigma")}.}
 
 \item{vars_to_rename}{(optional) Use for renaming variables/parameters in \code{mcmc}.
 A named character vector where the names are the new variable names
