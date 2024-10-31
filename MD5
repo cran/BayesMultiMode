@@ -1,4 +1,4 @@
-e472019cd6bb55b5b137d9fb02ef602f *DESCRIPTION
+8ad8be8d50efa50c59cbe532d56ea52e *DESCRIPTION
 0df126b3e954afa1e80638df8ae44350 *NAMESPACE
 00911f143fc317e7d2ed08ad77e2ffd4 *NEWS.md
 78e7e1d191c5f7bde6bb650af19eaec9 *R/bayes_fit.R
@@ -15,7 +15,7 @@ ece4e77bdbafd22e25b65781a67235dc *R/print_methods.R
 ae969e7bfe541b32aa10f0537e83e494 *R/summary_methods.R
 7a76b7553ed15a29a52664ac2a945939 *README.md
 e213e269b012ac2244576d292f07c4ef *THANKS
-c64d291d81cbd76c55e9e8f2cdb6c584 *build/partial.rdb
+266d121f3741eb6e88cc046abbebe49c *build/partial.rdb
 be80c4d08d9d4d9319e4710f6bb242eb *data/ct47.rda
 f3854ababedd2215374d3361bd9e0856 *data/cyclone.rda
 66df7ca6615cb22ff657dcbef9ca2137 *data/d4z4.rda
@@ -54,6 +54,6 @@ e54aceede35a52344da98abe627e7e7e *man/summary.mixture.Rd
 18b59a4d57e959cf242ce26727fc7f92 *tests/testthat/_snaps/bayes_mode.md
 1b45b11f56306585fc7244c3a9e6631c *tests/testthat/_snaps/mix_mode.md
 e50e2f9b4176af659f10c6b8159c6bce *tests/testthat/test-bayes_mixture.R
-bab3432e279fbbd1147d92ce1ce10d26 *tests/testthat/test-bayes_mode.R
+52e088381ff513786d06aeaa41b89c42 *tests/testthat/test-bayes_mode.R
 4b7cf71d55374cfd84ee19b756fa5282 *tests/testthat/test-mix_mode.R
 8b5a789a61cb6c0165399ab8582a72cf *tests/testthat/test-mixture.R
