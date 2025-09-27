@@ -1,6 +1,6 @@
-8ad8be8d50efa50c59cbe532d56ea52e *DESCRIPTION
+8449f38a22508efdebbb3310ca437e79 *DESCRIPTION
 0df126b3e954afa1e80638df8ae44350 *NAMESPACE
-00911f143fc317e7d2ed08ad77e2ffd4 *NEWS.md
+7689258b9448f14f8bcd8221d354cd4c *NEWS.md
 78e7e1d191c5f7bde6bb650af19eaec9 *R/bayes_fit.R
 34f2cbb46cfebcfbe36b89f952b77223 *R/bayes_mixture.R
 85bb1e7f5eacff91201b0f43ffc5e98d *R/bayes_mode.R
@@ -10,12 +10,12 @@
 46762219cb5c2e90b663f075b9dfe88e *R/mix_mode.R
 e811c2e05d9ac9f5216405ade113541f *R/mixture.R
 e8586ce599bf7fa72e128c6141635717 *R/mixture_functions.R
-de81e4170960cb25115f46b20cc00343 *R/plot_methods.R
+8d6510e7b3181bc4e3ff7b04fb3d51a0 *R/plot_methods.R
 ece4e77bdbafd22e25b65781a67235dc *R/print_methods.R
 ae969e7bfe541b32aa10f0537e83e494 *R/summary_methods.R
 7a76b7553ed15a29a52664ac2a945939 *README.md
 e213e269b012ac2244576d292f07c4ef *THANKS
-266d121f3741eb6e88cc046abbebe49c *build/partial.rdb
+ccdcf32e448cb7de7b93d10baf93b7e4 *build/partial.rdb
 be80c4d08d9d4d9319e4710f6bb242eb *data/ct47.rda
 f3854ababedd2215374d3361bd9e0856 *data/cyclone.rda
 66df7ca6615cb22ff657dcbef9ca2137 *data/d4z4.rda
